@@ -1,0 +1,169 @@
+
+@import play.api.mvc._
+
+@scripts = {
+    <script src='@routes.Assets.at("javascripts/controllers/myExpenses.js")' type="text/javascript"></script>
+}
+@main("My utils",scripts) {
+<!--//////////////////////////////////////  HEADER ////////////////////////////// -->
+<div class="background-image"></div>
+<div class="header">
+    <h1>Nuestros Gastos</h1>
+    <img src="https://emojipedia-us.s3.amazonaws.com/thumbs/120/emoji-one/104/money-with-wings_1f4b8.png">
+</div>
+<div class="content-body" ng-controller="myExpensesCtrl" ng-init="onInit()">
+<!--//////////////////////////////////////  PAGINA DE GASTOS ////////////////////////////// -->
+    <div id="gastosPage">
+        <div class="nav-container">
+            <ul class="nav nav-pills">
+                <li ng-class='{"active":togGasto==1}'>
+                    <a ng-click='togGasto=1;showExpenses= true;showNew=false' href="" >Ver Gastos</a>
+                </li>
+                <li ng-class='{"active":togGasto==2}'>
+                    <a ng-click='togGasto=2;showExpenses= false;showNew=true' href="" >Crear</a>
+                </li>
+            </ul>
+            <div class="months" ng-show="showExpenses">
+                <div class="month" ng-repeat="month in months" ng-class='{"active":activeMonth==month}' ng-model="month" ng-click="onMonthClicked(month)">{{monthToString(month)}}</div>
+            </div>
+        </div>
+        <div class="content">
+                <!-- TABLA DE GASTOS-->
+            <div id="gastosTable" ng-show="showExpenses">
+                <div class="data animate-show" ng-repeat="expense in myExpenseList">
+                    <div class="title">
+                        <p class="text-center">{{expense.name + ' (' + monthToString(expense.expenseMonth) + ')'}} </p>
+                        <a href=""ng-click="deleteExpense(expense.id)"> <i  class="fa fa-fw fa-trash delete-icon" ></i></a>
+                    </div>
+                    <div class="data-container">
+                        <div class="entry bold">
+                            <span>Fecha</span>
+                            <span>Concepto</span>
+                            <span>Tipo</span>
+                            <span>Monto</span>
+                            <span>Eliminar</span>
+                        </div>
+                        <div ng-repeat="money in expense.expenses" class="entry">
+                            <span>{{date(money.moneyDate)}}</span>
+                            <span>{{money.concept}}</span>
+                            <span>{{money.type}}</span>
+                            <span>{{money.moneyValue | currency}}</span>
+                            <span><a href=""ng-click="deleteMoney(money.id)"> <i  class="fa fa-fw fa-trash delete-icon" ></i></a></span>
+                        </div>
+                        <div class="entry total">
+                            <span class="bold">TOTAL</span>
+                            <span class="italic green">{{expense.total | currency}}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary">
+                    <label for="expenseSummaryCB"> Total del mes:</label>
+                    <select name="expenseSummaryCB"  ng-model="month" ng-change="getExpenseSummary(month)">
+                        <option data-ng-repeat="i in [1,2,3,4,5,6,7,8,9,10,11,12]"  value="{{i}}" >{{i}}</option>
+                    </select>
+                    <span>Debito/Efectivo: <span class="dark-green">{{(monthTotal - monthCreditTotal) | currency}}</span></span>
+                    <span>Credito: <span class="dark-green">{{monthCreditTotal | currency}}</span></span>
+                    <span class="bold">Total: <span class="dark-green italic">{{monthTotal | currency}}</span></span>
+                </div>
+            </div>
+        <!-- Forms de crear -->
+            <div id="formsNew" ng-show="showNew">
+                <!-- Form de Nueva Categoria -->
+                <div class="expense-form">
+                    <input type="hidden" ng-model="expense.id">
+                    <div>
+                        <h2 class="title">Nueva Categoria</h2>
+                    </div>
+                    <div>
+                        <div>                    
+                        Nombre:
+                        </div>
+                        <div>
+                            <input type="text" ng-model="expense.name" value="{{expense.name}}">
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Mes:
+                        </div>
+                        <div>
+                            <input type="number" ng-model="expense.expenseMonth" value="{{expense.expenseMonth}}" min="1" >
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <button type="button" class="btn btn-success" ng-click="createCategory()">Crear</button>
+                        </div>
+                    </div>
+                </div>
+            <!-- Form de Nuevo Gasto -->
+                <div class="expense-form">
+                    <div>
+                        <h2 class="title">Nuevo Gasto</h2>
+                    </div>
+                    <div>
+                        <div>                    
+                        Mes:
+                        </div>
+                        <div>
+                            <select name="typeSelect" ng-options="month as monthToString(month) for month in months" ng-model="month" ng-change="fillExpenseListByMonth(month)">
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Categoria:
+                        </div>
+                        <div>
+                            <select name="typeSelect" ng-model="money.expense">
+                            <option ng-repeat="expense in expenseListByMonth" value="{{expense}}">{{expense.name}}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Tipo:
+                        </div>
+                        <div>
+                            <select name="typeSelect" ng-model="money.type">
+                            <option value="Credito">Credito</option>
+                            <option value="Debito-Efectivo">Debito-Efectivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Fecha:
+                        </div>
+                        <div>
+                            <input type="date" ng-model="myDate.value" placeholder="yyyy-MM-dd">
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Concepto:
+                        </div>
+                        <div>
+                            <input type="text" ng-model="money.concept" value="{{money.concept}}">
+                        </div>
+                    </div>
+                    <div>
+                        <div>                    
+                        Monto:
+                        </div>
+                        <div>
+                            <input type="number" min="1" ng-model="money.moneyValue" value="{{money.moneyValue}}">
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <button type="button" class="btn btn-success" ng-click="createExpense(money.expense)">Crear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>    
+}
+
